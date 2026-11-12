@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Адмін-панель</title>
+<style>
+:root{--bg:#06241d;--bg2:#0b3a2e;--mint:#8fe3c0;--text:#efe3c8;--muted:#c9bb9c;--line:rgba(143,227,192,.25);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{color-scheme:dark;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% 0%,#12604a 0%,transparent 55%),radial-gradient(ellipse at 90% 100%,#1b7a62 0%,transparent 50%),var(--bg);background-attachment:fixed;color:var(--text);font-family:Georgia,'Times New Roman',serif;line-height:1.7}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,rgba(143,227,192,.10),transparent 60%);animation:glow 9s ease-in-out infinite alternate;pointer-events:none}
+@keyframes glow{from{opacity:.4;transform:scale(1)}to{opacity:1;transform:scale(1.08)}}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 5vw;background:rgba(6,36,29,.8);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.logo{font-size:1.25rem;letter-spacing:.08em;color:var(--mint)}
+nav a{color:var(--text);text-decoration:none;margin-left:20px;padding-bottom:3px;border-bottom:1px solid transparent;transition:.2s}
+nav a:hover,nav a.on{color:var(--mint);border-color:var(--mint)}
+main{position:relative;max-width:900px;margin:0 auto;padding:48px 5vw 80px}
+.page{display:none;animation:in .6s ease}.page.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:400;margin:0 0 6px;color:var(--text)}
+h2{font-weight:400;color:var(--mint);letter-spacing:.06em;margin:32px 0 10px}
+.sub{color:var(--mint);font-style:italic;margin-bottom:28px}
+.hero{display:grid;grid-template-columns:240px 1fr;gap:36px;align-items:start}
+.photo{aspect-ratio:3/4;border-radius:120px 120px 12px 12px;border:1px solid var(--mint);background:linear-gradient(160deg,#1b7a62,#0b3a2e);display:grid;place-items:center;color:var(--muted);font-size:.9rem;text-align:center;padding:12px;box-shadow:0 0 40px rgba(143,227,192,.18)}
+.btn{display:inline-block;margin-top:20px;padding:11px 26px;border:1px solid var(--mint);color:var(--mint);text-decoration:none;border-radius:30px;transition:.25s}
+.btn:hover{background:var(--mint);color:var(--bg)}
+.poems{display:grid;gap:16px}
+.poem{border:1px solid var(--line);background:rgba(11,58,46,.55);border-radius:14px;padding:20px 24px;cursor:pointer;transition:.25s}
+.poem:hover{border-color:var(--mint);transform:translateX(4px)}
+.poem h3{margin:0;font-weight:400;font-size:1.3rem;color:var(--mint)}
+.poem p{margin:10px 0 0;white-space:pre-line;color:var(--text);display:none}
+.poem.open p{display:block}
+.poem small{color:var(--muted)}
+footer{position:relative;text-align:center;color:var(--muted);padding:24px;border-top:1px solid var(--line);font-size:.9rem}
+@media(max-width:640px){.hero{grid-template-columns:1fr}.photo{max-width:220px}nav a{margin-left:12px}}
+.hidden{display:none!important}
+.ph{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.lock{background:none;border:none;color:var(--muted);cursor:pointer;font:inherit;margin-left:14px;opacity:.7}
+.lock:hover{color:var(--mint);opacity:1}
+#admin{position:fixed;inset:0;z-index:20;background:rgba(3,20,16,.88);overflow:auto;padding:max(16px,env(safe-area-inset-top)) 4vw 40px}
+#admin .box{max-width:760px;margin:0 auto;background:var(--bg2);border:1px solid var(--mint);border-radius:16px;padding:22px}
+#admin h2{margin-top:0}
+label{display:block;margin:14px 0 4px;color:var(--mint);font-size:.9rem}
+input,textarea{width:100%;background:#06241d;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit}
+textarea{min-height:110px;resize:vertical}
+.pe{border:1px dashed var(--line);border-radius:10px;padding:12px;margin-top:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.b2{background:none;border:1px solid var(--mint);color:var(--mint);border-radius:30px;padding:9px 20px;font:inherit;cursor:pointer}
+.b2:hover,.b2.pri{background:var(--mint);color:var(--bg)}
+.b2.del{border-color:#d98c7a;color:#d98c7a}.b2.del:hover{background:#d98c7a;color:var(--bg)}
+#msg{margin-top:12px;color:var(--mint)}
+</style>
+</head><body><div id="admin"><div class="box" id="root"></div></div>
+<script>
+var D,SRC,root=document.getElementById('root');
+function h(t,p,k){var e=document.createElement(t);for(var a in (p||{})){if(a==='text')e.textContent=p[a];else if(a==='on')for(var v in p.on)e.addEventListener(v,p.on[v]);else e.setAttribute(a,p[a])}(k||[]).forEach(function(c){e.append(c)});return e}
+function field(l,v,multi,type){var i=h(multi?'textarea':'input',type?{type:type}:{});i.value=v||'';return{wrap:h('div',{},[h('label',{text:l}),i]),i:i}}
+async function sha(s){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
+function login(){
+ var rec=null;try{rec=JSON.parse(localStorage.getItem('adm')||'null')}catch(e){}
+ var u=field('Логін','',0),p=field('Пароль','',0,'password'),msg=h('div',{id:'msg'});
+ var go=h('button',{'class':'b2 pri',text:rec?'Увійти':'Створити й увійти','on':{click:async function(){
+  if(!window.crypto||!crypto.subtle){msg.textContent='Відкрийте сторінку за адресою https:// (не як файл).';return}
+  if(!u.i.value.trim()||p.i.value.length<6){msg.textContent='Логін обов’язковий, пароль — від 6 символів.';return}
+  var hh=await sha(u.i.value.trim()+':'+p.i.value);
+  if(!rec){try{localStorage.setItem('adm',JSON.stringify({h:hh}))}catch(e){}load()}
+  else if(hh===rec.h)load();else msg.textContent='Невірний логін або пароль.'}}});
+ root.innerHTML='';root.append(h('h2',{text:'Адмін-панель'}),h('p',{text:rec?'Введіть логін і пароль.':'Перший вхід: придумайте логін і пароль. Вони збережуться в цьому браузері.'}),u.wrap,p.wrap,h('div',{'class':'row'},[go]),msg)}
+async function load(){
+ root.textContent='Завантажую…';
+ try{var r=await fetch('index.html?'+Date.now());SRC=await r.text();var m=SRC.match(/<script type="application\/json" id="data">([\s\S]*?)<\/script>/);D=JSON.parse(m[1]);editor()}
+ catch(e){root.textContent='Не вдалося завантажити index.html. Переконайтеся, що admin.html лежить поруч з ним.'}}
+function editor(){
+ var f={name:field('Ім’я',D.name),role:field('Підпис під іменем',D.role),bio:field('Біографія (абзаци розділяйте порожнім рядком)',D.bio.join('\n\n'),1),ig:field('Instagram (посилання)',D.instagram)};
+ f.bio.i.style.minHeight='200px';
+ var photo=D.photo,pimg=h('img',{'class':'ph',style:'max-width:120px;border-radius:10px;display:'+(photo?'block':'none'),src:photo||''});
+ var file=h('input',{type:'file',accept:'image/*'});
+ file.addEventListener('change',function(){var fl=file.files[0];if(!fl)return;var im=new Image();im.onload=function(){var r=Math.min(1,700/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*r;c.height=im.height*r;c.getContext('2d').drawImage(im,0,0,c.width,c.height);photo=c.toDataURL('image/jpeg',.82);pimg.src=photo;pimg.style.display='block'};im.src=URL.createObjectURL(fl)});
+ var pbox=h('div',{}),poems=D.poems.map(function(p){return{title:p.title,year:p.year,text:p.text}});
+ function draw(){pbox.innerHTML='';poems.forEach(function(p,n){var t=field('Назва',p.title),y=field('Рік',p.year),x=field('Текст',p.text,1);
+  t.i.oninput=function(){p.title=t.i.value};y.i.oninput=function(){p.year=y.i.value};x.i.oninput=function(){p.text=x.i.value};
+  pbox.append(h('div',{'class':'pe'},[t.wrap,y.wrap,x.wrap,h('div',{'class':'row'},[h('button',{'class':'b2 del',text:'Видалити вірш','on':{click:function(){poems.splice(n,1);draw()}}})])]))})}
+ draw();var msg=h('div',{id:'msg'});
+ var save=h('button',{'class':'b2 pri',text:'Завантажити оновлений index.html','on':{click:function(){
+  D.name=f.name.i.value.trim()||D.name;D.role=f.role.i.value.trim();D.instagram=f.ig.i.value.trim();D.photo=photo;
+  D.bio=f.bio.i.value.split(/\n\s*\n/).map(function(s){return s.trim()}).filter(Boolean);
+  D.poems=poems.filter(function(p){return p.title.trim()||p.text.trim()});
+  var json=JSON.stringify(D).replace(/</g,'\\u003c');
+  var out=SRC.replace(/<script type="application\/json" id="data">[\s\S]*?<\/script>/,function(){return '<script type="application/json" id="data">'+json+'<\/script>'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/html'}));a.download='index.html';document.body.append(a);a.click();a.remove();
+  msg.textContent='Файл завантажено. Тепер замініть index.html у репозиторії на GitHub (Add file → Upload files).'}}});
+ root.innerHTML='';
+ root.append(h('h2',{text:'Адмін-панель'}),f.name.wrap,f.role.wrap,h('label',{text:'Фото'}),pimg,file,f.bio.wrap,f.ig.wrap,h('h2',{text:'Вірші'}),pbox,
+  h('div',{'class':'row'},[h('button',{'class':'b2',text:'+ Додати вірш','on':{click:function(){poems.push({title:'',year:'',text:''});draw()}}})]),
+  h('div',{'class':'row'},[save]),msg)}
+login();
+</script></body></html>
